@@ -1,0 +1,8 @@
+{
+    "canaryName": "LocalSyntheticsCanary",
+    "artifactS3Location": {
+        "s3Bucket": "cw-syn-results-123456789012-us-west-2",
+        "s3Key": "local-run-artifacts"
+    },
+    "customerCanaryHandlerName": "heartbeat-canary.handler"
+}

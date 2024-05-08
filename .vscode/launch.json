@@ -1,0 +1,59 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "SAM:Run NodeJS Canary",
+            "invokeTarget": {
+                "target": "template",
+                "templatePath": "${workspaceFolder}/nodejs-canary/template.yml",
+                "logicalId": "NodeJSPuppeteerCanary"
+            },
+            "lambda": {
+                "payload": {
+                    "json": {
+                        "canaryName": "LocalSyntheticsCanary",
+                        "artifactS3Location": {
+                            "s3Bucket": "cw-syn-results-123456789012-us-west-2",
+                            "s3Key": "local-run-artifacts",
+                        },
+                        "customerCanaryHandlerName": "heartbeat-canary.handler"
+                    }
+                },
+                "environmentVariables": {}
+            },
+            "sam": {
+                "localArguments": ["--invoke-image", "public.ecr.aws/lambda/nodejs:18.2023.11.18.01"],
+                "skipNewImageCheck": true
+            }
+        },
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "SAM:Run Python Canary",
+            "invokeTarget": {
+                "target": "template",
+                "templatePath": "${workspaceFolder}/python-canary/template.yml",
+                "logicalId": "PythonSeleniumCanary"
+            },
+            "lambda": {
+                "payload": {
+                    "json": {
+                        "canaryName": "LocalSyntheticsCanary",
+                        "artifactS3Location": {
+                            "s3Bucket": "cw-syn-results-123456789012-us-west-2",
+                            "s3Key": "local-run-artifacts",
+                        },
+                        "customerCanaryHandlerName": "heartbeat-canary.handler"
+                    }
+                },
+                "environmentVariables": {}
+            },
+            "sam": {
+                "localArguments": ["--invoke-image", "public.ecr.aws/lambda/python:3.8.2023.11.18.02"],
+                "skipNewImageCheck": true
+            }
+        }
+    ]
+}

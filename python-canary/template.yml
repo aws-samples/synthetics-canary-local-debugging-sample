@@ -1,0 +1,81 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for testing Synthetics Python canary locally
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 3
+
+Resources:
+  CanaryExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CanaryExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource:
+                  - arn:aws:s3:::cw-syn-results-*/*
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                Resource:
+                  - arn:aws:s3:::cw-syn-results-*/*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                Resource:
+                  - arn:aws:logs:*:*:log-group:/aws/lambda/cwsyn-*
+              - Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                  - xray:PutTraceSegments
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Resource: "*"
+                Action: cloudwatch:PutMetricData
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: CloudWatchSynthetics
+
+  #  Canary lambda that runs when invoked with sam local invoke
+  PythonSeleniumCanary:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Local Synthetics Python Dev Canary
+      Handler: cw-synthetics.handler
+      Runtime: python3.8
+      Architectures:
+        - x86_64
+      CodeUri: src/
+      MemorySize: 1024
+      Timeout: 300
+      Environment:
+        Variables:
+          MODE: "Local canary test"
+      Layers:
+        # Synthetics runtime layer
+        # Use the appropriate Layer ARN to run your canary against the intended Synthetics runtime in the desired AWS region.
+        # Refer to the CloudWatch Synthetics documentation to find the Layer ARN list for the supported runtimes in all supported AWS Regions.
+        # https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Debug_Locally.html#CloudWatch_Synthetics_Debug_DifferentRuntime
+        - arn:aws:lambda:us-west-2:760325925879:layer:Synthetics_Selenium:34 # syn-python-selenium-2.0
+      Role: !GetAtt CanaryExecutionRole.Arn        

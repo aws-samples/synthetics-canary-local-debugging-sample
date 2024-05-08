@@ -1,0 +1,9 @@
+{
+    "name": "synthetics-local-dev",
+    "description": "Local Synthetics canary dev environment",
+    "version": "1.0.0",
+    "private": true,
+    "dependencies": {
+        "@faker-js/faker": "^8.3.1"
+    }
+}
