@@ -16,6 +16,8 @@ You should have the following prerequisites:
 -	Install [Visual Studio Code](https://code.visualstudio.com/) editor or [JetBrains IDE](https://www.jetbrains.com/idea/). 
 -	Install [Docker](https://docs.docker.com/get-docker/) and start the daemon.        
 -	Install [AWS Toolkit for VS Code](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html) extension for VS Code or [AWS Toolkit for IntelliJ IDEA](https://docs.aws.amazon.com/toolkit-for-vscode/latest/userguide/welcome.html) extension for JetBrains IDE depending on your editor preference.
+- An [Amazon S3](https://aws.amazon.com/s3/) bucket for canary artifacts.
+    - **Note**: You can skip this step if you wish. The canary can still be run locally, but it will not be able to upload artifacts to the S3 bucket. The canary logs will contain errors related to this, but you can safely ignore them.
 
 ## Setting up local debugging environment
 Clone this repository using this cmd.
