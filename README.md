@@ -61,7 +61,9 @@ The launch configuration file is located at `.vscode/launch.json`. It contains c
                             "s3Key": "local-run-artifacts",
                         },
                         // Your canary handler name
-                        "customerCanaryHandlerName": "heartbeat-canary.handler"
+                        "customerCanaryHandlerName": "heartbeat-canary.handler",
+                        // Canary run Id
+                        "canaryRunId": "random-uuid"
                     }
                 },
                 // Environment variables to pass to the canary code
@@ -75,8 +77,7 @@ The launch configuration file is located at `.vscode/launch.json`. It contains c
 Other optional fields that you can provide in payload JSON are:               
 - `s3EncryptionMode`: valid values: `SSE_S3` | `SSE_KMS`.
 - `s3KmsKeyArn`: <KMS Key ARN>
-- `activeTracing`: valid values: true | false.
-- `canaryRunId`: <UUID> // required if active tracing is enabled.               
+- `activeTracing`: valid values: true | false.         
 
 ## Debugging canary in VS Code
 Add breakpoints in the canary code where you wish to pause execution by clicking on the editor margin and go to **Run and Debug** mode in the editor. Execute the canary by clicking on the play button. When the canary executes, the logs will be tailed in the debug console, providing you with real-time insights into the canary's behavior. If you added breakpoints the canary execution will pause at each breakpoint, allowing you step through code and inspect variable values, instance methods, object attributes, function call stack etc.
@@ -100,7 +101,8 @@ If you use [JetBrains IDE](https://www.jetbrains.com/idea/) then you will requir
         "s3Bucket": "cw-syn-results-123456789012-us-west-2",
         "s3Key": "local-run-artifacts"
     },
-    "customerCanaryHandlerName": "heartbeat-canary.handler"
+    "customerCanaryHandlerName": "heartbeat-canary.handler",
+    "canaryRunId": "random-uuid"
 }
 ```
 
@@ -111,7 +113,8 @@ If you use [JetBrains IDE](https://www.jetbrains.com/idea/) then you will requir
 1. Make sure to specify your own S3 bucket name for `s3Bucket` in `event.json`.
 2. To run NodeJS canary, go to `nodejs-canary` directory and run following commands.
     - `sam build`
-    - `sam local invoke -e ../event.json`
+    - `sam local invoke -e NodeJSPuppeteerCanary ../event.json` (To run Puppeteer canary)
+    - `sam local invoke -e NodeJSPlaywrightCanary ../event.json` (To run Playwright canary)
 3. Similary to run Python canary, go to `python-canary` directory and run same commands as above.
 
 ## Caveat

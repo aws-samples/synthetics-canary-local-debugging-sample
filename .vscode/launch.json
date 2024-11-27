@@ -4,7 +4,7 @@
         {
             "type": "aws-sam",
             "request": "direct-invoke",
-            "name": "SAM:Run NodeJS Canary",
+            "name": "SAM:Run NodeJS Puppeteer Canary",
             "invokeTarget": {
                 "target": "template",
                 "templatePath": "${workspaceFolder}/nodejs-canary/template.yml",
@@ -18,13 +18,42 @@
                             "s3Bucket": "cw-syn-results-123456789012-us-west-2",
                             "s3Key": "local-run-artifacts",
                         },
-                        "customerCanaryHandlerName": "heartbeat-canary.handler"
+                        "customerCanaryHandlerName": "heartbeat-canary.handler",
+                        "canaryRunId": "random-uuid" 
                     }
                 },
                 "environmentVariables": {}
             },
             "sam": {
                 "localArguments": ["--invoke-image", "public.ecr.aws/lambda/nodejs:18.2023.11.18.01"],
+                "skipNewImageCheck": true
+            }
+        },
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "SAM:Run NodeJS Playwright Canary",
+            "invokeTarget": {
+                "target": "template",
+                "templatePath": "${workspaceFolder}/nodejs-canary/template.yml",
+                "logicalId": "NodeJSPlaywrightCanary"
+            },
+            "lambda": {
+                "payload": {
+                    "json": {
+                        "canaryName": "LocalSyntheticsCanary",
+                        "artifactS3Location": {
+                            "s3Bucket": "cw-syn-results-123456789012-us-west-2",
+                            "s3Key": "local-run-artifacts",
+                        },
+                        "customerCanaryHandlerName": "playwright-canary.handler",
+                        "canaryRunId": "random-uuid"
+                    }
+                },
+                "environmentVariables": {}
+            },
+            "sam": {
+                "localArguments": ["--invoke-image", "public.ecr.aws/lambda/nodejs:20"],
                 "skipNewImageCheck": true
             }
         },
@@ -45,7 +74,8 @@
                             "s3Bucket": "cw-syn-results-123456789012-us-west-2",
                             "s3Key": "local-run-artifacts",
                         },
-                        "customerCanaryHandlerName": "heartbeat-canary.handler"
+                        "customerCanaryHandlerName": "heartbeat-canary.handler",
+                        "canaryRunId": "random-uuid"
                     }
                 },
                 "environmentVariables": {}
