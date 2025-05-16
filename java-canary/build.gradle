@@ -1,0 +1,59 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
+    // Use the interfaces provided by the Synthetics library for creating Java canaries with steps 
+    // https://mvnrepository.com/artifact/software.amazon.synthetics/aws-cloudwatch-synthetics-sdk-java
+    // This is used for imports for the form software.amazon.synthetics.* 
+    // Please refer to MonitoringAppWithSteps.java for example usage. 
+    compileOnly 'software.amazon.synthetics:aws-cloudwatch-synthetics-sdk-java:1.0.0'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+// Build the zip to be used as Canary code.
+task buildZip(type: Zip) {
+
+    // Name of the zip file that contains the user code along with the required dependencies.
+    // This will be written to the build directory in the root directory.
+    archiveFileName.set("example-canary.zip")
+    destinationDirectory.set(file("$buildDir"))
+    
+    // Include processed resources (like application.properties) in the zip root
+    from processResources
+    
+    // Create a 'lib' directory in the zip containing all dependencies
+    into('lib') {
+        // Include all runtime dependencies (external JARs)
+        from configurations.runtimeClasspath
+        // Include the compiled project JAR file
+        from(tasks.named("jar"))
+    }
+    
+    // Include the synthetics configuration file in the zip root
+    from "src/main/java/resources/synthetics.json"
+
+    doLast {
+        println "Artifact written to: ${archiveFile.get().asFile.absolutePath}"
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+tasks.named("build") {
+    dependsOn "buildZip"
+}
+

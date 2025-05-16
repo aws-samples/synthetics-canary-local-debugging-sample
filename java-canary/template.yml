@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Sample SAM Template for testing Synthetics Java canary locally
+
+# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Globals:
+  Function:
+    Timeout: 10
+
+Resources:
+  CanaryExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument: 
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: CanaryExecutionPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                Resource:
+                  - arn:aws:s3:::cw-syn-results-*/*
+              - Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                Resource:
+                  - arn:aws:s3:::cw-syn-results-*/*
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                  - logs:CreateLogGroup
+                Resource:
+                  - arn:aws:logs:*:*:log-group:/aws/lambda/cwsyn-*
+              - Effect: Allow
+                Action:
+                  - s3:ListAllMyBuckets
+                  - xray:PutTraceSegments
+                Resource:
+                  - "*"
+              - Effect: Allow
+                Resource: "*"
+                Action: cloudwatch:PutMetricData
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: CloudWatchSynthetics
+
+  JavaCanary:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Local Synthetics Java Dev Canary
+      Handler: com.amazonaws.synthetics.Handler::handleRequest
+      Runtime: java21
+      Architectures:
+        - x86_64
+      CodeUri: build/example-canary.zip
+      MemorySize: 1024
+      Timeout: 300
+      Environment:
+        Variables:
+          MODE: "Local canary test"
+      Layers:
+        # syn-java-1.0
+        - arn:aws:lambda:us-west-2:760325925879:layer:AWS-CW-SyntheticsJava:4
+      Role: !GetAtt CanaryExecutionRole.Arn

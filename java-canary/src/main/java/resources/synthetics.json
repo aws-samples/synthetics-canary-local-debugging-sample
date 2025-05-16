@@ -1,0 +1,24 @@
+{
+    "step": {
+        "stepSuccessMetric": true,
+        "stepDurationMetric": true,
+        "continueOnStepFailure": true,
+        "stepsReport": true
+    },
+    "logging": {
+        "logRequest": false,
+        "logResponse": false
+    },
+    "httpMetrics": {
+        "metric_2xx": true,
+        "metric_4xx": true,
+        "metric_5xx": true,
+        "aggregated2xxMetric": true,
+        "aggregated4xxMetric": true,
+        "aggregated5xxMetric": true
+    },
+    "canaryMetrics": {
+        "failedCanaryMetric": true,
+        "aggregatedFailedCanaryMetric": true
+    }
+}
