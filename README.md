@@ -43,6 +43,13 @@ The repository contains code samples for both NodeJS canary and Python canary.
     ``` 
 2.	Run `pip3 install -r requirements.txt -t .` to install canary dependencies.
 
+### Java canary
+1.	The code for the Java canary is located in the java-canary directory. 
+    ```
+    cd synthetics-canary-local-debugging-sample/java-canary
+    ``` 
+2.	Use the build.gradle if you would like to add additional dependencies.
+
 ## Visual Studio Code launch configuration
 The launch configuration file is located at `.vscode/launch.json`. It contains configuration to allow the template file to be discovered by VS Code. It defines Lambda payload with required parameters to invoke the canary successfully. Here’s the launch configuration for NodeJS canary.
 
@@ -110,12 +117,20 @@ If you use [JetBrains IDE](https://www.jetbrains.com/idea/) then you will requir
 
 
 ## Run canary locally with SAM CLI
-1. Make sure to specify your own S3 bucket name for `s3Bucket` in `event.json`.
+1. Make sure to specify your own S3 bucket name for `s3Bucket` in `event.json` and change the handler name appropriately.
 2. To run NodeJS canary, go to `nodejs-canary` directory and run following commands.
     - `sam build`
-    - `sam local invoke -e NodeJSPuppeteerCanary ../event.json` (To run Puppeteer canary)
-    - `sam local invoke -e NodeJSPlaywrightCanary ../event.json` (To run Playwright canary)
-3. Similary to run Python canary, go to `python-canary` directory and run same commands as above.
+    - `sam local invoke NodeJSPuppeteerCanary -e event.json` (To run Puppeteer canary)
+    - `sam local invoke NodeJSPlaywrightCanary -e event.json` (To run Playwright canary)
+3. To run Python canary, go to `python-canary` directory and run the following commands.
+    - `sam build`
+    - `sam local invoke PythonSeleniumCanary -e event.json`
+4. To run Java canary, go to `java-canary` directory and run the following commands.
+    - `gradle wrapper && ./gradlew clean build `
+    - `sam local invoke JavaCanary -e event.json`
+   Any generic Java code can be run as a canary and the code can be modularized using Synthetics provided library functions. 
+   Please refer `MonitoringAppGeneric.java` for an example of creating Java canaries without steps.
+   Please refere `MonitoringAppWithSteps.java` for an example of creating Java canaries with steps. 
 
 ## Caveat
 

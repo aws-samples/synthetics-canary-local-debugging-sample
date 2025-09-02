@@ -84,6 +84,34 @@
                 "localArguments": ["--invoke-image", "public.ecr.aws/lambda/python:3.8.2023.11.18.02"],
                 "skipNewImageCheck": true
             }
+        },
+        {
+            "type": "aws-sam",
+            "request": "direct-invoke",
+            "name": "SAM:Run Java Canary",
+            "invokeTarget": {
+                "target": "template",
+                "templatePath": "${workspaceFolder}/java-canary/template.yml",
+                "logicalId": "JavaCanary"
+            },
+            "lambda": {
+                "payload": {
+                    "json": {
+                        "canaryName": "LocalSyntheticsCanary",
+                        "artifactS3Location": {
+                            "s3Bucket": "cw-syn-results-123456789012-us-west-2",
+                            "s3Key": "local-run-artifacts",
+                        },
+                        "customerCanaryHandlerName": "org.example.monitoring.MonitoringAppGeneric::handler",
+                        "canaryRunId": "random-uuid"
+                    }
+                },
+                "environmentVariables": {}
+            },
+            "sam": {
+                "localArguments": ["--invoke-image", "public.ecr.aws/lambda/java:21"],
+                "skipNewImageCheck": true
+            }
         }
     ]
 }
