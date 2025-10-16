@@ -1,0 +1,765 @@
+{
+  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "title": "CloudWatch Synthetics Advanced Blueprints - Reusable Components",
+  "description": "Schema with comprehensive validation using unevaluatedProperties",
+  "type": "object",
+  "properties": {
+    "globalSettings": {
+      "$ref": "#/definitions/GlobalSettings"
+    },
+    "variables": {
+      "$ref": "#/definitions/Variables"
+    },
+    "steps": {
+      "$ref": "#/definitions/Steps"
+    }
+  },
+  "required": ["steps"],
+  "unevaluatedProperties": false,
+  
+  "definitions": {
+    "GlobalSettings": {
+      "type": "object",
+      "properties": {
+        "stepTimeout": {
+          "$ref": "#/definitions/TimeoutMilliseconds"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    
+    "Variables": {
+      "type": "object",
+      "maxProperties": 10,
+      "patternProperties": {
+        "^[a-zA-Z][a-zA-Z0-9_]*$": {
+          "type": "string"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    
+    "Steps": {
+      "type": "object",
+      "patternProperties": {
+        "^([1-9]|10)$": {
+          "$ref": "#/definitions/Step"
+        }
+      },
+      "unevaluatedProperties": false,
+      "maxProperties": 10,
+      "minProperties": 1
+    },
+    
+    "Step": {
+      "type": "object",
+      "properties": {
+        "stepName": {
+          "$ref": "#/definitions/StepName"
+        },
+        "checkerType": {
+          "$ref": "#/definitions/CheckerType"
+        },
+        "extractors": {
+          "$ref": "#/definitions/Extractors"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "checkerType": { "const": "HTTP" } } },
+          "then": { "$ref": "#/definitions/HttpCheck" }
+        },
+        {
+          "if": { "properties": { "checkerType": { "const": "DNS" } } },
+          "then": { "$ref": "#/definitions/DnsCheck" }
+        },
+        {
+          "if": { "properties": { "checkerType": { "const": "SSL" } } },
+          "then": { "$ref": "#/definitions/SslCheck" }
+        },
+        {
+          "if": { "properties": { "checkerType": { "const": "TCP" } } },
+          "then": { "$ref": "#/definitions/TcpCheck" }
+        }
+      ],
+      "required": ["stepName", "checkerType"],
+      "unevaluatedProperties": false
+    },
+ 
+    "CommonNetworkFields": {
+      "type": "object",
+      "properties": {
+        "hostname": {
+          "$ref": "#/definitions/Hostname"
+        },
+        "port": {
+          "$ref": "#/definitions/Port"
+        },
+        "timeout": {
+          "$ref": "#/definitions/TimeoutMilliseconds"
+        }
+      }
+    },
+ 
+    "CommonAssertionOperators": {
+      "enum": ["EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS", "GREATER_THAN", "LESS_THAN", "REGEX_MATCH"]
+    },
+
+    "StringAssertionOperators": {
+      "enum": ["EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS", "REGEX_MATCH"]
+    },
+ 
+    "CommonComparisonOperators": {
+      "enum": ["EQUALS", "GREATER_THAN", "LESS_THAN"]
+    },
+ 
+    "TimeoutMilliseconds": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 300000,
+      "default": 5000
+    },
+ 
+    "Hostname": {
+      "type": "string",
+      "pattern": "^([a-zA-Z0-9][a-zA-Z0-9.-]*[a-zA-Z0-9]|\\$\\{[a-zA-Z_][a-zA-Z0-9_]*\\})$",
+      "maxLength": 253
+    },
+ 
+    "Port": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 65535
+    },
+ 
+    "StepName": {
+      "type": "string",
+      "pattern": "^[a-zA-Z][a-zA-Z0-9_-]*$",
+      "maxLength": 64
+    },
+ 
+    "CheckerType": {
+      "type": "string",
+      "enum": ["HTTP", "DNS", "SSL", "TCP"]
+    },
+ 
+    "Extractors": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Extractor"
+      }
+    },
+    
+    "Extractor": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["BODY"]
+        },
+        "path": {
+          "type": "string"
+        },
+        "regex": {
+          "type": "string"
+        },
+        "regexGroup": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        }
+      },
+      "required": ["name", "type"],
+      "unevaluatedProperties": false
+    },
+ 
+    "ResponseTimeAssertion": {
+      "type": "object",
+      "properties": {
+        "type": { "const": "RESPONSE_TIME" },
+        "operator": {
+          "enum": ["LESS_THAN", "GREATER_THAN", "EQUALS"]
+        },
+        "value": {
+          "type": "number",
+          "minimum": 0
+        },
+        "unit": {
+          "enum": ["MILLISECONDS"],
+          "default": "MILLISECONDS"
+        }
+      },
+      "required": ["type", "operator", "value"]
+    },
+ 
+    "HttpCheck": {
+      "type": "object",
+      "properties": {
+        "checkerType": { "const": "HTTP" },
+        "url": {
+          "type": "string",
+          "format": "safe-uri"
+        },
+        "httpMethod": {
+          "type": "string",
+          "enum": ["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"],
+          "default": "GET"
+        },
+        "timeout": {
+          "$ref": "#/definitions/TimeoutMilliseconds"
+        },
+        "waitTime": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60,
+          "default": 0
+        },
+        "headers": {
+          "type": "object",
+          "patternProperties": {
+            "^[a-zA-Z][a-zA-Z0-9-_]*$": {
+              "type": "string"
+            }
+          },
+          "unevaluatedProperties": false
+        },
+        "body": {
+          "type": "string"
+        },
+        "authentication": {
+          "$ref": "#/definitions/Authentication"
+        },
+        "assertions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/HttpAssertion"
+          }
+        }
+      },
+      "required": ["url","httpMethod"]
+    },
+ 
+    "Authentication": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["NONE", "BASIC", "API_KEY", "OAUTH_CLIENT_CREDENTIALS", "SIGV4"]
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "NONE" } } },
+          "then": {
+            "properties": {
+              "type": { "const": "NONE" }
+            },
+            "required": ["type"],
+            "additionalProperties": false
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "BASIC" } } },
+          "then": {
+            "properties": {
+              "type": { "const": "BASIC" },
+              "username": { "type": "string" },
+              "password": { "type": "string" }
+            },
+            "required": ["username", "password"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "API_KEY" } } },
+          "then": {
+            "properties": {
+              "type": { "const": "API_KEY" },
+              "apiKey": { "type": "string" },
+              "headerName": { "type": "string", "default": "X-API-Key" }
+            },
+            "required": ["type","apiKey"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "OAUTH_CLIENT_CREDENTIALS" } } },
+          "then": {
+            "properties": {
+              "type": { "const": "OAUTH_CLIENT_CREDENTIALS" },
+              "tokenUrl": { "type": "string", "format": "safe-uri" },
+              "clientId": { "type": "string" },
+              "clientSecret": { "type": "string" },
+              "scope": { "type": "string" },
+              "audience": { "type": "string" },
+              "resource": { "type": "string" },
+              "tokenApiAuth": { 
+                "type": "array", 
+                "items": { "enum": ["BASIC_AUTH_HEADER", "REQUEST_BODY"] }
+              }
+            },
+            "required": ["type", "tokenUrl", "clientId", "clientSecret"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "SIGV4" } } },
+          "then": {
+            "properties": {
+              "type": { "const": "SIGV4" },
+              "region": { "type": "string" },
+              "service": { "type": "string" },
+              "roleArn": {  "type": "string" }
+            },
+            "required": ["type", "service", "region", "roleArn"]
+          }
+        }
+      ],
+      "required": ["type"],
+      "unevaluatedProperties": false
+    },
+ 
+    "HttpAssertion": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["STATUS_CODE", "RESPONSE_TIME", "HEADER", "BODY"]
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "STATUS_CODE" } } },
+          "then": {
+            "properties": {
+              "operator": { 
+                "enum": ["EQUALS", "NOT_EQUALS", "GREATER_THAN", "LESS_THAN", "IN_RANGE"] 
+              },
+              "value": { 
+                "type": "integer", 
+                "minimum": 100, 
+                "maximum": 599 
+              },
+              "rangeMin": { 
+                "type": "integer", 
+                "minimum": 100, 
+                "maximum": 599 
+              },
+              "rangeMax": { 
+                "type": "integer", 
+                "minimum": 100, 
+                "maximum": 599 
+              }
+            },
+            "required": ["operator"],
+            "allOf": [
+              {
+                "if": { "properties": { "operator": { "const": "IN_RANGE" } } },
+                "then": { "required": ["rangeMin", "rangeMax"] }
+              },
+              {
+                "if": { 
+                  "properties": { 
+                    "operator": { 
+                      "enum": ["EQUALS", "NOT_EQUALS", "GREATER_THAN", "LESS_THAN"] 
+                    } 
+                  } 
+                },
+                "then": { "required": ["value"] }
+              }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "RESPONSE_TIME" } } },
+          "then": { "$ref": "#/definitions/ResponseTimeAssertion" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "HEADER" } } },
+          "then": {
+            "properties": {
+              "headerName": { "type": "string" },
+              "operator": { 
+                "enum": ["EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS", "REGEX_MATCH", "EXIST"]
+              }
+            },
+            "required": ["headerName", "operator"],
+            "allOf": [
+              {
+                "if": {
+                  "properties": {
+                    "operator": { "const": "EXIST" }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "value": { "type": "boolean" }
+                  },
+                  "required": ["value"]
+                }
+              },
+              {
+                "if": {
+                  "properties": {
+                    "operator": { 
+                      "enum": ["EQUALS", "NOT_EQUALS", "CONTAINS", "NOT_CONTAINS", "REGEX_MATCH"]
+                    }
+                  }
+                },
+                "then": {
+                  "properties": {
+                    "value": { "type": "string" }
+                  },
+                  "required": ["value"]
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "BODY" } } },
+          "then": {
+            "properties": {
+              "target": { "enum": ["JSON", "TEXT"], "default": "JSON" },
+              "path": { "type": "string" },
+              "operator": { 
+                "enum": ["CONTAINS", "NOT_CONTAINS", "EQUALS", "NOT_EQUALS", "EXISTS"] 
+              },
+              "value": {}
+            },
+            "required": ["operator", "value"],
+            "allOf": [
+              {
+                "if": { 
+                  "anyOf": [
+                    { "properties": { "target": { "const": "JSON" } } },
+                    { "not": { "properties": { "target": {} } } }
+                  ]
+                },
+                "then": { "required": ["path"] }
+              },
+              {
+                "if": { "properties": { "operator": { "const": "EXISTS" } } },
+                "then": {
+                  "properties": {
+                    "value": { "type": "boolean" }
+                  }
+                },
+                "else": {
+                  "properties": {
+                    "value": { "type": "string" }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "required": ["type"],
+      "unevaluatedProperties": false
+    },
+ 
+    "DnsCheck": {
+      "type": "object",
+      "properties": {
+        "checkerType": { "const": "DNS" },
+        "domain": {
+          "$ref": "#/definitions/Hostname"
+        },
+        "recordType": {
+          "type": "string",
+          "enum": ["A", "CNAME", "MX", "TXT", "NS"],
+          "default": "A"
+        },
+        "nameserver": {
+          "$ref": "#/definitions/Hostname"
+        },
+        "timeout": {
+          "$ref": "#/definitions/TimeoutMilliseconds"
+        },
+        "port": {
+          "$ref": "#/definitions/Port",
+          "default": 53
+        },
+        "protocol": {
+          "type": "string",
+          "enum": ["UDP", "TCP"],
+          "default": "UDP"
+        },
+        "assertions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/DnsAssertion"
+          }
+        }
+      },
+      "required": ["domain"]
+    },
+ 
+    "DnsAssertion": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["RECORD_VALUE", "RECORD_COUNT", "RESPONSE_TIME", "AUTHORITATIVE", "TTL"]
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "RECORD_VALUE" } } },
+          "then": {
+            "properties": {
+              "operator": { "$ref": "#/definitions/StringAssertionOperators" },
+              "value": { "type": "string" }
+            },
+            "required": ["operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "RECORD_COUNT" } } },
+          "then": {
+            "properties": {
+              "operator": { "$ref": "#/definitions/CommonComparisonOperators" },
+              "value": { "type": "integer", "minimum": 0 }
+            },
+            "required": ["operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "RESPONSE_TIME" } } },
+          "then": { "$ref": "#/definitions/ResponseTimeAssertion" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "AUTHORITATIVE" } } },
+          "then": {
+            "properties": {
+              "value": { "type": "boolean" }
+            },
+            "required": ["value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "TTL" } } },
+          "then": {
+            "properties": {
+              "operator": { "$ref": "#/definitions/CommonComparisonOperators" },
+              "value": { "type": "integer", "minimum": 0 }
+            },
+            "required": ["operator", "value"]
+          }
+        }
+      ],
+      "required": ["type"],
+      "unevaluatedProperties": false
+    },
+ 
+    "SslCheck": {
+      "allOf": [
+        { "$ref": "#/definitions/CommonNetworkFields" },
+        {
+          "type": "object",
+          "properties": {
+            "checkerType": { "const": "SSL" },
+            "port": {
+              "$ref": "#/definitions/Port",
+              "default": 443
+            },
+            "timeout": {
+              "$ref": "#/definitions/TimeoutMilliseconds"
+            },
+            "sni": {
+              "type": "boolean",
+              "default": true
+            },
+            "verifyHostname": {
+              "type": "boolean",
+              "default": true
+            },
+            "allowSelfSigned": {
+              "type": "boolean",
+              "default": false
+            },
+            "assertions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SslAssertion"
+              }
+            }
+          },
+          "required": ["hostname"]
+        }
+      ]
+    },
+ 
+    "SslAssertion": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["CERTIFICATE_EXPIRY", "CERTIFICATE_VALID", "CERTIFICATE_SUBJECT", "CERTIFICATE_ISSUER", "CIPHER_SUITE", "CERTIFICATE_TRANSPARENCY"]
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "CERTIFICATE_EXPIRY" } } },
+          "then": {
+            "properties": {
+              "operator": { "enum": ["GREATER_THAN", "LESS_THAN"] },
+              "value": { "type": "integer", "minimum": 0 },
+              "unit": { "enum": ["DAYS", "HOURS"], "default": "DAYS" }
+            },
+            "required": ["operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "CERTIFICATE_VALID" } } },
+          "then": {
+            "properties": {
+              "value": { "type": "boolean" }
+            },
+            "required": ["value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "CERTIFICATE_SUBJECT" } } },
+          "then": {
+            "properties": {
+              "field": { "enum": ["CN", "O", "OU", "C", "ST", "L"] },
+              "operator": { "enum": ["CONTAINS", "EQUALS", "REGEX_MATCH"] },
+              "value": { "type": "string" },
+              "regex": { "type": "string" }
+            },
+            "required": ["field", "operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "CERTIFICATE_ISSUER" } } },
+          "then": {
+            "properties": {
+              "field": { "enum": ["CN", "O"] },
+              "operator": { "enum": ["CONTAINS", "EQUALS"] },
+              "value": { "type": "string" }
+            },
+            "required": ["field", "operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "CIPHER_SUITE" } } },
+          "then": {
+            "properties": {
+              "operator": { "enum": ["CONTAINS", "NOT_CONTAINS"] },
+              "value": { "type": "string" }
+            },
+            "required": ["operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "CERTIFICATE_TRANSPARENCY" } } },
+          "then": {
+            "properties": {
+              "value": { "type": "boolean" }
+            },
+            "required": ["value"]
+          }
+        }
+      ],
+      "required": ["type"],
+      "unevaluatedProperties": false
+    },
+ 
+    "TcpCheck": {
+      "allOf": [
+        { "$ref": "#/definitions/CommonNetworkFields" },
+        {
+          "type": "object",
+          "properties": {
+            "checkerType": { "const": "TCP" },
+            "timeout": {
+              "$ref": "#/definitions/TimeoutMilliseconds"
+            },
+            "sendData": {
+              "type": "string"
+            },
+            "expectedResponse": {
+              "type": "string"
+            },
+            "encoding": {
+              "type": "string",
+              "enum": ["UTF-8", "ASCII", "HEX"],
+              "default": "UTF-8"
+            },
+            "assertions": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TcpAssertion"
+              }
+            }
+          },
+          "required": ["hostname", "port"]
+        }
+      ]
+    },
+ 
+    "TcpAssertion": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["CONNECTION_SUCCESSFUL", "RESPONSE_TIME", "RESPONSE_DATA", "RESPONSE_SIZE"]
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "type": { "const": "CONNECTION_SUCCESSFUL" } } },
+          "then": {
+            "properties": {
+              "value": { "type": "boolean" }
+            },
+            "required": ["value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "RESPONSE_TIME" } } },
+          "then": { "$ref": "#/definitions/ResponseTimeAssertion" }
+        },
+        {
+          "if": { "properties": { "type": { "const": "RESPONSE_DATA" } } },
+          "then": {
+            "properties": {
+              "operator": { "enum": ["CONTAINS", "EQUALS", "NOT_CONTAINS", "REGEX_MATCH", "STARTS_WITH", "ENDS_WITH"] },
+              "value": { "type": "string" },
+              "encoding": { "enum": ["UTF-8", "ASCII", "HEX"], "default": "UTF-8" }
+            },
+            "required": ["operator", "value"]
+          }
+        },
+        {
+          "if": { "properties": { "type": { "const": "RESPONSE_SIZE" } } },
+          "then": {
+            "properties": {
+              "operator": { "$ref": "#/definitions/CommonComparisonOperators" },
+              "value": { "type": "number", "minimum": 0 },
+              "unit": { "enum": ["BYTES"], "default": "BYTES" }
+            },
+            "required": ["operator", "value"]
+          }
+        }
+      ],
+      "required": ["type"],
+      "unevaluatedProperties": false
+    }
+  }
+}
